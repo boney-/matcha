@@ -6,9 +6,11 @@ require 'dm-migrations'
 require 'bcrypt'
 require 'rubygems'
 require 'haml'
+require 'rack-flash'
 include BCrypt
 
 register Sinatra::Reloader
+
 
 DataMapper.setup(:default, 'mysql://root:root42@localhost/matcha')
 
@@ -16,18 +18,20 @@ class User
   include DataMapper::Resource
 
   property :id,         Serial
-  property :login,      String
-  property :pass,       String
+  property :email,      String
+  property :gender,     String
+  property :sex_orient, String
+  property :bio,        Text          
+  property :pass,       BCryptHash
   property :created_at, DateTime
 end
 
 DataMapper.finalize
 #
-# DataMapper.auto_migrate!
+DataMapper.auto_upgrade!
 
 enable :sessions
-
-userTable = {}
+use Rack::Flash
 
 helpers do
 
@@ -46,28 +50,36 @@ helpers do
 end
 
 get "/" do
-  # haml :index
-  pass = Password.new("$2a$10$Voyzr67pj/nbxwTQW1xjE.ZmfQu19X/Xr.V3soTfwJSY5Ld59tJxC")
-  if pass == "coco"
-    "allo"
-  else
-    "no"
-  end
+  haml :index
 end
 
 get "/signup" do
   haml :signup
 end
 
+
 post "/signup" do
-  password = BCrypt::Password.create("test")
-  #ideally this would be saved into a database, hash used just for sample
-  User.create(:login => params[:username], :pass => password)
-  "ok"
+  #ideally this would be saved into a database
+  count = User.count(:conditions => ['email =?', params["email"]])
+  if count > 0
+    flash[:warning] = "This email is already associated with an existing account."
+    redirect "/"
+  else
+    password = Password.create(params["password"]) #Genere le hash
+    user = User.new(:email => params["email"], :gender => "male", :pass => Password.create(params["password"])) #On cree un nouvel user
+    if user.save #Handler pour erreurs du save sur la db
+      flash[:sucess] = "User sucefully created"
+      redirect "/"
+    else
+      user.errors.each do |e|
+        return e
+      end
+    end
+  end
 end
 
 post "/login" do
-  if userTable.has_key?(params[:username])
+  if session
     user = userTable[params[:username]]
     if user[:passwordhash] == BCrypt::Engine.hash_secret(params[:password], user[:salt])
       session[:username] = params[:username]
