@@ -4,15 +4,12 @@
     %title Sinatra Website
   %body
     #wrapper
-      -if flash[:notice]
-        #flash-notice
-          %span #{flash[:notice]}
-      -if flash[:warning]
-        #flash-warning
-          %span #{flash[:warning]}
-      -if flash[:sucess]
-        #flash-sucess
-          %span #{flash[:sucess]}
+      -if session[:warning]
+        %span #{session[:warning]}
+        -session[:warning] = ""
+      -if session[:success]
+        %span #{session[:success]}
+        -session[:success] = ""
       #header
         %h1 test sinatra
 

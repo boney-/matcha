@@ -1,11 +1,10 @@
 -if login?
-  %h1= "Welcome #{username}!"
   %a{:href => "/logout"} Logout
 -else
   %form(action="/login" method="post")
     %div
-      %label(for="email")Email:
-      %input#username(type="text" name="email")
+      %label(for="username")Username:
+      %input#username(type="text" name="username")
     %div
       %label(for="password")Password:
       %input#password(type="password" name="password")
@@ -14,3 +13,4 @@
       %input(type="reset" value="Clear")
   %p
     %a{:href => "/signup"} Signup
+    %a{:href => "/reset"} Reset password
