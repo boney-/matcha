@@ -20,12 +20,14 @@ client.query("CREATE TABLE IF NOT EXISTS users (\
   id INT KEY AUTO_INCREMENT,\
   login VARCHAR(32),\
   email VARCHAR(20),\
-  name VARCHAR(20),\
-  surname VARCHAR(20),\
+  firstname VARCHAR(20),\
+  lastname VARCHAR(20),\
   gender VARCHAR(10),\
   sex_orient VARCHAR(20),\
   bio VARCHAR(250),\
-  password VARCHAR(60))")
+  password VARCHAR(60),\
+  token VARCHAR(60),\
+  token_time DATETIME)")
 
 helpers do
 
@@ -37,6 +39,15 @@ helpers do
     end
   end
 
+  def validator(params = {})
+    ['login','firstname','lastname','email','password'].each do |check|
+      if params[check].nil? || params[check] == ''
+        return false
+      end
+    end
+    return true
+  end
+
   def username
     return session[:user]
   end
@@ -46,10 +57,6 @@ end
 get "/" do
   results = client.query("SELECT * FROM users")
   haml :index
-end
-
-get "/signup" do
-  haml :signup
 end
 
 #Reset du password ###----
@@ -97,9 +104,12 @@ end
 
 #------------------------
 
+get "/signup" do
+  haml :signup
+end
+
 post "/signup" do
-  #ideally this would be saved into a database
-  if params['login'] && params['password']
+  if validator(params)
     statement = client.prepare("SELECT id from users where email = ? OR login = ?")
     res = statement.execute(params['email'], params['login'])
     if res.count > 0
@@ -107,8 +117,8 @@ post "/signup" do
      redirect "/signup"
     else
       password = Password.create(params["password"]) #Genere le hash
-      state = client.prepare("INSERT INTO users (login, password) VALUES (?, ?)") #On cree un nouvel user
-      state.execute(params['login'], password)
+      state = client.prepare("INSERT INTO users (login, password, email, firstname, lastname) VALUES (?, ?, ?, ?, ?)") #On cree un nouvel user
+      state.execute(params['login'], password, params['email'], params['firstname'], params['lastname'])
       session[:success] = "Account successfully created."
       redirect "/signup"
     end
