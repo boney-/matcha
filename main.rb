@@ -27,19 +27,6 @@ client.query("CREATE TABLE IF NOT EXISTS users (\
   bio VARCHAR(250),\
   password VARCHAR(60))")
 
-# class User
-#   def initialize(id, login, email, name, surname, gender, sex_orient, bio)
-#     @id = id
-#     @login = login
-#     @email = email
-#     @name = name
-#     @surname = surname
-#     @gender = gender
-#     @sex_orient = sex_orient
-#     @bio = bio
-#   end
-# end
-
 helpers do
 
   def login?
