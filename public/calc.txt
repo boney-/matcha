@@ -1,0 +1,10 @@
+0		111
+
+
+111
+
+
+N = (111 * longitude)^2 + (111 * latitude)^2 = 111 * (longitude^2 + latitude^2)
+d (km) = rac(N)
+
+

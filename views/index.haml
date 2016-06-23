@@ -1,6 +1,8 @@
 -if login?
+  .geores{:id => "GeoResults"}
   %a{:href => "/logout"} Logout
 -else
+  /%p your ip is #{session["ip"]} /affichage ip
   %form(action="/login" method="post")
     %div
       %label(for="username")Username:

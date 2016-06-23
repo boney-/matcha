@@ -29,6 +29,8 @@ client.query("CREATE TABLE IF NOT EXISTS users (\
   token VARCHAR(60),\
   token_time DATETIME)")
 
+client.query("CREATE TABLE IF NOT EXISTS user_coords (id INT KEY, latitude FLOAT(13,8), longitude FLOAT(13,8))")
+
 helpers do
 
   def login?
@@ -40,8 +42,8 @@ helpers do
   end
 
   def validator(params = {})
-    ['login','firstname','lastname','email','password'].each do |check|
-      if params[check].nil? || params[check] == ''
+    params.each do |k, check|
+      if check.nil? || check == ''
         return false
       end
     end
@@ -56,6 +58,7 @@ end
 
 get "/" do
   results = client.query("SELECT * FROM users")
+  session["ip"] = request.ip
   haml :index
 end
 
@@ -120,7 +123,7 @@ post "/signup" do
       state = client.prepare("INSERT INTO users (login, password, email, firstname, lastname) VALUES (?, ?, ?, ?, ?)") #On cree un nouvel user
       state.execute(params['login'], password, params['email'], params['firstname'], params['lastname'])
       session[:success] = "Account successfully created."
-      redirect "/signup"
+      redirect "/"
     end
   else
     session[:warning] = "One or more required fields are missing."
@@ -129,7 +132,7 @@ post "/signup" do
 end
 
 post "/login" do
-  if session && params['username'] && params['password']
+  if session && validator(params)
     state = client.prepare("SELECT * from users WHERE login = ?")
     res = state.execute(params['username'])
     res.each {|row| session[:user] = row}
@@ -137,6 +140,17 @@ post "/login" do
       session[:success] = "You are now logged in as #{session[:user]["login"]}"
       redirect "/"
     end
+  else
+    session[:warning] = "one or more field are empty."
+    redirect "/"
+  end
+end
+
+get '/play/:lat/:lon' do
+  if request.xhr? && login?
+    state = client.prepare("INSERT INTO user_coords (id, latitude, longitude) VALUES(?, ?, ?) ON DUPLICATE KEY UPDATE latitude=? , longitude=?")
+    state.execute(session[:user]['id'],params['lat'],params['lon'],params['lat'],params['lon'])
+    "test"
   end
 end
 
@@ -145,3 +159,6 @@ get "/logout" do
   session[:success] = "You are logged out, see you soon."
   redirect "/"
 end
+
+
+
