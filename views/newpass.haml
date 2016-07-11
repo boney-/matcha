@@ -1,7 +1,0 @@
-%form(action="/forgot" method="post")
-	%div
-		%label(for="password")new password:
-		%input#username(type="text" name="password")
-		%input#username(type="hidden" name="token" value="#{session[:token]}")
-	%div
-		%input(type="submit" value="reset")
