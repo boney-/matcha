@@ -16,18 +16,11 @@ register Sinatra::Reloader
 enable :sessions
 
 client = Mysql2::Client.new(:host => "localhost", :username => "root", :password => "root42", :database => "matcha")
-client.query("CREATE TABLE IF NOT EXISTS users (\
-  id INT KEY AUTO_INCREMENT,\
-  login VARCHAR(32),\
-  email VARCHAR(20),\
-  firstname VARCHAR(20),\
-  lastname VARCHAR(20),\
-  gender VARCHAR(10),\
-  sex_orient VARCHAR(20),\
-  bio VARCHAR(250),\
-  password VARCHAR(60),\
-  token VARCHAR(60),\
-  token_time DATETIME)")
+client.query("CREATE TABLE IF NOT EXISTS users (id INT KEY AUTO_INCREMENT, login VARCHAR(32), email VARCHAR(20), firstname VARCHAR(20), lastname VARCHAR(20), gender VARCHAR(10), sex_orient VARCHAR(20), bio VARCHAR(250), password VARCHAR(60), token VARCHAR(60), token_time DATETIME, age INT, image VARCHAR(20))")
+
+client.query("CREATE TABLE IF NOT EXISTS likes (id INT KEY AUTO_INCREMENT, from_user INT, liked INT, time TIMESTAMP)")
+client.query("CREATE TABLE IF NOT EXISTS matchs (id INT KEY AUTO_INCREMENT, user1 INT, user2 INT, time TIMESTAMP)")
+client.query("CREATE TABLE IF NOT EXISTS visit (id INT KEY AUTO_INCREMENT, from_user INT, to_user INT, time TIMESTAMP)")
 
 helpers do
 
@@ -163,6 +156,12 @@ get "/u/:login" do
     res.each {|row| @user = row}
     if res.count == 1
       @like = liked(client, session[:user]["id"], @user['id'])
+      res = client.query("SELECT id from visit WHERE from_user = " + session[:user]['id'].to_s + " AND to_user = "+ @user['id'].to_s)
+      if res.count == 0
+        client.query("insert into visit VALUES (null, " + session[:user]['id'].to_s + ", " + @user['id'].to_s + ", NOW())")
+      else
+        client.query("UPDATE visit SET last_visit = NOW() WHERE from_user = " + session[:user]['id'].to_s + " AND to_user = " + @user['id'].to_s)
+      end
       erb :profile
     else
       session[:warning] = "Unknown user"
@@ -171,18 +170,22 @@ get "/u/:login" do
   end
 end
 
+get '/profile' do
+  visits = client.query("SELECT lastname from users INNER JOIN visit ON users.id = from_user WHERE to_user =" + session[:user]['id'])
+end
+
+
 get '/like/:id' do
   # if request.xhr? && login?
   if login? 
-    if liked(client, session[:user]["id"], params['id']) == 0
       state = client.prepare("insert into likes VALUES(null, ?, ?, NOW())")
       state.execute(session[:user]["id"], params["id"])
       if liked(client, params["id"], session[:user]["id"]) == 1
         state = client.prepare("insert into matchs VALUES (null, ?, ?, NOW(), 0)")
-        state.execute(session[:user]["id"], params["id"]) 
+        state.execute(session[:user]["id"], params["id"])
+        state.execute(params["id"], session[:user]["id"])
       end
-    end
-    return "ok"
+    "ok"
   end
 end
 
