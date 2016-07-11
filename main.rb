@@ -29,8 +29,6 @@ client.query("CREATE TABLE IF NOT EXISTS users (\
   token VARCHAR(60),\
   token_time DATETIME)")
 
-client.query("CREATE TABLE IF NOT EXISTS user_coords (id INT KEY, latitude FLOAT(13,8), longitude FLOAT(13,8))")
-
 helpers do
 
   def login?
@@ -41,9 +39,20 @@ helpers do
     end
   end
 
+  def liked(db, from, to) #check si like
+    if session[:user]
+      state = db.prepare("SELECT * from likes WHERE from_user = ? AND liked = ?")
+      res = state.execute(from, to)
+      if res.count > 0
+        return 1
+      end
+      return 0
+    end
+  end
+
   def validator(params = {})
-    params.each do |k, check|
-      if check.nil? || check == ''
+    params.each do |check|
+      if params[check] == ''
         return false
       end
     end
@@ -58,14 +67,13 @@ end
 
 get "/" do
   results = client.query("SELECT * FROM users")
-  session["ip"] = request.ip
-  haml :index
+  erb :index
 end
 
 #Reset du password ###----
 
 get "/reset" do
-  haml :resetpass
+  erb :resetpass
 end
 
 post "/reset" do
@@ -87,7 +95,7 @@ end
 get "/forgot/:token/" do
   if params["token"].length == 60
     session[:token] = params["token"]
-    haml :newpass
+    erb :newpass
   end
 end
 
@@ -108,7 +116,7 @@ end
 #------------------------
 
 get "/signup" do
-  haml :signup
+  erb :signup
 end
 
 post "/signup" do
@@ -123,7 +131,7 @@ post "/signup" do
       state = client.prepare("INSERT INTO users (login, password, email, firstname, lastname) VALUES (?, ?, ?, ?, ?)") #On cree un nouvel user
       state.execute(params['login'], password, params['email'], params['firstname'], params['lastname'])
       session[:success] = "Account successfully created."
-      redirect "/"
+      redirect "/signup"
     end
   else
     session[:warning] = "One or more required fields are missing."
@@ -134,15 +142,47 @@ end
 post "/login" do
   if session && validator(params)
     state = client.prepare("SELECT * from users WHERE login = ?")
-    res = state.execute(params['username'])
+    res = state.execute(params['login'])
     res.each {|row| session[:user] = row}
     if res.count == 1 && Password.new(session[:user]["password"]) == params['password']
       session[:success] = "You are now logged in as #{session[:user]["login"]}"
-      redirect "/"
+    else
+      session[:user] = nil
+      session[:warning] = "Incorrect login"
     end
   else
-    session[:warning] = "one or more field are empty."
-    redirect "/"
+    session[:warning] = "One or more required fields are missing."
+  end
+  redirect "/"
+end
+
+get "/u/:login" do
+  if params["login"] && login?
+    state = client.prepare("SELECT id, firstname, lastname, gender, sex_orient, bio, age, image from users WHERE login = ?")
+    res = state.execute(params["login"])
+    res.each {|row| @user = row}
+    if res.count == 1
+      @like = liked(client, session[:user]["id"], @user['id'])
+      erb :profile
+    else
+      session[:warning] = "Unknown user"
+      redirect "/"
+    end
+  end
+end
+
+get '/like/:id' do
+  # if request.xhr? && login?
+  if login? 
+    if liked(client, session[:user]["id"], params['id']) == 0
+      state = client.prepare("insert into likes VALUES(null, ?, ?, NOW())")
+      state.execute(session[:user]["id"], params["id"])
+      if liked(client, params["id"], session[:user]["id"]) == 1
+        state = client.prepare("insert into matchs VALUES (null, ?, ?, NOW(), 0)")
+        state.execute(session[:user]["id"], params["id"]) 
+      end
+    end
+    return "ok"
   end
 end
 
@@ -150,7 +190,7 @@ get '/play/:lat/:lon' do
   if request.xhr? && login?
     state = client.prepare("INSERT INTO user_coords (id, latitude, longitude) VALUES(?, ?, ?) ON DUPLICATE KEY UPDATE latitude=? , longitude=?")
     state.execute(session[:user]['id'],params['lat'],params['lon'],params['lat'],params['lon'])
-    "test"
+    "Position updated."
   end
 end
 
@@ -159,6 +199,3 @@ get "/logout" do
   session[:success] = "You are logged out, see you soon."
   redirect "/"
 end
-
-
-

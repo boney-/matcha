@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  <head>
+    <title>Tinder like</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="/css/main.css" rel="stylesheet" type="text/css"></link>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+    <script src="/js/like.js" type="text/javascript"></script>
+    <script src="/js/geoloc.js" type="text/javascript"></script>
+    <script src="/js/match.js" type="text/javascript"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div id="wrapper">
+    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/">Tinder-like.</a>
+        </div>
+        <div class="navbar-collapse collapse navbar-right">
+          <ul class="nav navbar-nav">
+            <li id="nav-home"><a href="/">HOME</a></li>
+            <li id="nav-search"><a href="/search">SEARCH</a></li>
+            <li id="nav-contact"><a href="/contact">CONTACT</a></li>
+            <% if login? %>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">PROFILE <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="/profile">Modif. Profile</a></li>
+                <li><a href="/logout">DISCONNECT</a></li>
+              </ul>
+            </li>
+            <% else %>
+            <li id="nav-login"><a href="/">SIGN IN</a></li>
+            <% end %>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+      <div id="content" class=".col-md-4">
+      <% if session[:warning]!= "" %>
+        <div class="alert alert-danger"> <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><%= session[:warning] %></div>
+        <% session[:warning] = "" %>
+      <% end %>
+      <% if session[:success] != "" %>
+        <div class="alert alert-success"> <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><%= session[:success] %></div>
+        <% session[:success] = "" %>
+      <% end %>
+        <%= yield %>
+      </div>
+ <div id="footerwrap">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-4">
+          <h4>About</h4>
+          <hr style=" color: black; height: 1px; background-color:black;" />
+          <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.</p>
+        </div>
+        <div class="col-lg-4">
+          <h4>Social Links</h4>
+          <hr style=" color: black; height: 1px; background-color:black;" />
+        </div>
+        <div class="col-lg-4">
+          <h4>Our Bunker</h4>
+          <hr style=" color: black; height: 1px; background-color:black;" />
+          <p>
+            96 Boulevard Bessieres,<br/>
+            75017, PARIS<br/>
+            France.<br/>
+          </p>
+        </div>
+      
+      </div>
+    </div>
+   </div>
+    </div>
+  </body>
+</html>
